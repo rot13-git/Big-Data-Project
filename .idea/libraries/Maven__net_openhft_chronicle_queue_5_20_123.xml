@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Maven: net.openhft:chronicle-queue:5.20.123">
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/net/openhft/chronicle-queue/5.20.123/chronicle-queue-5.20.123.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/net/openhft/chronicle-queue/5.20.123/chronicle-queue-5.20.123-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/net/openhft/chronicle-queue/5.20.123/chronicle-queue-5.20.123-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
