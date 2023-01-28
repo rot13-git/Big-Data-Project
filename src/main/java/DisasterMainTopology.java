@@ -11,6 +11,9 @@ public class DisasterMainTopology {
         Config config = new Config();
 
         //Add spout and bolt
+        topologyBuilder.setSpout("disasterSpout",new DisasterSpout(
+                "resources/drive-download-20221212T122415Z-001/170826213907_hurricane_harvey_2017_20170827_vol-2.json/170826213907_hurricane_harvey_2017_20170827_vol-2.json"
+                ));
 
         config.put(Config.TOPOLOGY_BOLTS_WINDOW_LENGTH_DURATION_MS,1000);
 
