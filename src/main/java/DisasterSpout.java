@@ -1,3 +1,6 @@
+import com.google.gson.*;
+import com.google.gson.internal.LinkedTreeMap;
+import com.google.gson.stream.JsonReader;
 import org.apache.storm.spout.SpoutOutputCollector;
 import org.apache.storm.task.TopologyContext;
 import org.apache.storm.topology.OutputFieldsDeclarer;
@@ -18,6 +21,9 @@ public class DisasterSpout extends BaseRichSpout {
     private FileReader fileReader;
     private String filePath;
     private BufferedReader bufferedReader;
+    private JsonReader reader;
+    private Gson gson;
+    private JsonStreamParser p;
     public DisasterSpout(String filePath){
         this.filePath=filePath;
     }
@@ -25,10 +31,15 @@ public class DisasterSpout extends BaseRichSpout {
     @Override
     public void open(Map<String, Object> map, TopologyContext topologyContext, SpoutOutputCollector spoutOutputCollector) {
         try{
+
             this.fileReader = new FileReader(filePath);
-            this.bufferedReader = new BufferedReader(fileReader);
+            gson = new GsonBuilder().create();
+            p = new JsonStreamParser(this.fileReader);
+            System.out.println("FATTO");
         }catch (FileNotFoundException fileNotFoundException){
             fileNotFoundException.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
         this.context = topologyContext;
         this.collector = spoutOutputCollector;
@@ -37,18 +48,27 @@ public class DisasterSpout extends BaseRichSpout {
 
     @Override
     public void nextTuple() {
-        String entry;
-        try {
-            entry = bufferedReader.readLine();
-            if(entry!=null){
-                this.collector.emit("tweet_stream",new Values(entry));
+            if(p.hasNext()){
+                try{
+                    JsonElement e = p.next();
+                    if (e.isJsonObject()) {
+                        LinkedTreeMap m = gson.fromJson(e, LinkedTreeMap.class);
+
+                        this.collector.emit("tweet_stream",new Values(m));
+                        //System.out.println("[+] NUOVO TWEET");
+                        //System.out.println(m.get("retweeted"));
+                    }
+                }catch (RuntimeException r){
+                    r.printStackTrace();
+                }
+
+
+                //this.collector.emit("tweet_stream",new Values(entry));
             }else{
                 this.collector.emit("tweet_stream",new Values("finish"));
             }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
+
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
