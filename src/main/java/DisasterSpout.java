@@ -52,14 +52,15 @@ public class DisasterSpout extends BaseRichSpout {
                 try{
                     JsonElement e = p.next();
                     if (e.isJsonObject()) {
-                        LinkedTreeMap m = gson.fromJson(e, LinkedTreeMap.class);
-
-                        this.collector.emit("tweet_stream",new Values(m));
+                        //LinkedTreeMap m = gson.fromJson(e, LinkedTreeMap.class);
+                        String json = e.toString();
+                        this.collector.emit("tweet_stream",new Values(json));
                         //System.out.println("[+] NUOVO TWEET");
                         //System.out.println(m.get("retweeted"));
                     }
                 }catch (RuntimeException r){
-                    r.printStackTrace();
+                    this.collector.emit("tweet_stream",new Values("finish"));
+                    //r.printStackTrace();
                 }
 
 

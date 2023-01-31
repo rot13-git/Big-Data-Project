@@ -5,7 +5,9 @@ import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
 import org.apache.storm.topology.OutputFieldsDeclarer;
 import org.apache.storm.topology.base.BaseRichBolt;
+import org.apache.storm.tuple.Fields;
 import org.apache.storm.tuple.Tuple;
+import org.apache.storm.tuple.Values;
 import org.json.JSONObject;
 
 import java.util.List;
@@ -32,18 +34,24 @@ public class DisasterBolt extends BaseRichBolt {
             System.out.println("FINITO");
         }
         else{
-            Map ret = (Map) o;
+            //Map ret = (Map) o;
+
+            //READ TWEET FROM SPOUT
+            String ret = (String) o;
             JSONObject tweet = new JSONObject(ret);
 
+            //EXECUTE SENTIMENT ANALYSIS
             String sentiment = sentimentAnalysis(tweet.getString("text"));
             System.out.println(sentiment);
+
         }
+        this.outputCollector.emit("tweet_stream", new Values(tuple.getString(0)));
         //System.out.println(jsonObject.keySet().toString());
     }
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-
+        outputFieldsDeclarer.declareStream("tweet_stream",new Fields("tweet"));
     }
 
     public String sentimentAnalysis(String text){
