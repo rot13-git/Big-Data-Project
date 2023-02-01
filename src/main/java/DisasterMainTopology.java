@@ -16,6 +16,7 @@ public class DisasterMainTopology {
                 ),1);
         //topologyBuilder.setBolt("disasterPrintBolt",new DisasterPrintBolt(),4).shuffleGrouping("disasterSpout", "tweet_stream");
         topologyBuilder.setBolt("disasterBolt",new DisasterBolt(),8).shuffleGrouping("disasterSpout","tweet_stream");
+        topologyBuilder.setBolt("disasterLogBolt",new DisasterLogBolt(),1).globalGrouping("disasterBolt","tweet_stream");
         config.setNumWorkers(3);
         config.put(Config.TOPOLOGY_BOLTS_WINDOW_LENGTH_DURATION_MS,10000);
 

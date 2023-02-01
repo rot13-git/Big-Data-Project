@@ -9,7 +9,6 @@ import org.apache.storm.tuple.Fields;
 import org.apache.storm.tuple.Tuple;
 import org.apache.storm.tuple.Values;
 import org.json.JSONObject;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -30,23 +29,25 @@ public class DisasterBolt extends BaseRichBolt {
     @Override
     public void execute(Tuple tuple) {
         Object o = tuple.getValue(0);
+
         if(o.toString().equals("finish")){
-            System.out.println("FINITO");
+            this.outputCollector.emit("tweet_stream", new Values("finish"));
         }
         else{
             //Map ret = (Map) o;
-
             //READ TWEET FROM SPOUT
             String ret = (String) o;
             JSONObject tweet = new JSONObject(ret);
 
             //EXECUTE SENTIMENT ANALYSIS
             String sentiment = sentimentAnalysis(tweet.getString("text"));
-            System.out.println(sentiment);
+            tweet.put("sentiment",sentiment);
+
+            //SEND TO OUTPUT BOLT
+            this.outputCollector.emit("tweet_stream", new Values(tweet.toString()));
 
         }
-        this.outputCollector.emit("tweet_stream", new Values(tuple.getString(0)));
-        //System.out.println(jsonObject.keySet().toString());
+
     }
 
     @Override
