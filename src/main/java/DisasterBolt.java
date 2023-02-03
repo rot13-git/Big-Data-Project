@@ -1,6 +1,7 @@
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import edu.stanford.nlp.pipeline.CoreDocument;
 import edu.stanford.nlp.pipeline.CoreSentence;
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
@@ -28,6 +29,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+
+import static utils.EncodeData.isQuotedWithPlace;
+import static utils.EncodeData.isRetweetedWithPlace;
 
 public class DisasterBolt extends BaseRichBolt {
     private StanfordCoreNLP stanfordCoreNLP;
@@ -65,16 +69,17 @@ public class DisasterBolt extends BaseRichBolt {
             //READ TWEET FROM SPOUT
             String ret = (String) o;
             JSONObject tweet = new JSONObject(ret);
+            //System.out.println(tweet.getJSONObject("retweeted_status"));
+            if(tweet.getString("place") != "null" || isRetweetedWithPlace(tweet) || isQuotedWithPlace(tweet)){
+                //EXECUTE SENTIMENT ANALYSIS
+                String sentiment = sentimentAnalysis(tweet.getString("text"));
+                tweet.put("sentiment",sentiment);
 
-            //EXECUTE SENTIMENT ANALYSIS
-            String sentiment = sentimentAnalysis(tweet.getString("text"));
-            tweet.put("sentiment",sentiment);
-
-            //this.tweets.put(tweet.getString("id"),tweet);
-            //System.out.println(this.tweets.keySet());
-            //SEND TO OUTPUT BOLT
-            this.outputCollector.emit("tweet_stream", new Values(tweet.toString()));
-
+                //this.tweets.put(tweet.getString("id"),tweet);
+                //System.out.println(this.tweets.keySet());
+                //SEND TO OUTPUT BOLT
+                this.outputCollector.emit("tweet_stream", new Values(tweet.toString()));
+            }
         }
 
     }

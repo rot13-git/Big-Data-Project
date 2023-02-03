@@ -62,14 +62,14 @@ public class DisasterSpout extends BaseRichSpout {
                     }
 
                 }catch (RuntimeException r){
-                    this.collector.emit("tweet_stream",new Values("finish"));
+                    //this.collector.emit("tweet_stream",new Values("finish"));
                     //r.printStackTrace();
                 }
 
 
                 //this.collector.emit("tweet_stream",new Values(entry));
             }else{
-                this.collector.emit("tweet_stream",new Values("finish"));
+                //this.collector.emit("tweet_stream",new Values("finish"));
             }
     }
 
