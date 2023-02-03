@@ -7,6 +7,7 @@ import org.apache.storm.topology.OutputFieldsDeclarer;
 import org.apache.storm.topology.base.BaseRichSpout;
 import org.apache.storm.tuple.Fields;
 import org.apache.storm.tuple.Values;
+import org.apache.storm.utils.Utils;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
@@ -48,6 +49,7 @@ public class DisasterSpout extends BaseRichSpout {
 
     @Override
     public void nextTuple() {
+            //Utils.sleep(10);
             if(p.hasNext()){
                 try{
                     JsonElement e = p.next();
@@ -58,6 +60,7 @@ public class DisasterSpout extends BaseRichSpout {
                         //System.out.println("[+] NUOVO TWEET");
                         //System.out.println(m.get("retweeted"));
                     }
+
                 }catch (RuntimeException r){
                     this.collector.emit("tweet_stream",new Values("finish"));
                     //r.printStackTrace();
