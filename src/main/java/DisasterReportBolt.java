@@ -65,12 +65,12 @@ public class DisasterReportBolt extends BaseRichBolt {
         CloseableHttpClient httpClient = HttpClients.createDefault();
         HttpPost httppost = new HttpPost(Constants.POST_URL+"/test");
 
-        String jsonMap = EncodeData.encodeJson(tweets);
+        //String jsonMap = EncodeData.encodeJson(tweets);
 
         LOG.info(String.valueOf(tweets.size()));
 
         try{
-            httppost.setEntity(new StringEntity(jsonMap));
+            httppost.setEntity(new StringEntity("test"));
         } catch (UnsupportedEncodingException unsupportedEncodingException) {
             unsupportedEncodingException.printStackTrace();
         }

@@ -20,15 +20,14 @@ import org.apache.storm.topology.base.BaseRichBolt;
 import org.apache.storm.tuple.Fields;
 import org.apache.storm.tuple.Tuple;
 import org.apache.storm.tuple.Values;
+import org.json.JSONArray;
 import org.json.JSONObject;
+import org.mortbay.util.ajax.JSON;
 import utils.Constants;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 
 import static utils.EncodeData.isQuotedWithPlace;
 import static utils.EncodeData.isRetweetedWithPlace;
@@ -39,6 +38,7 @@ public class DisasterBolt extends BaseRichBolt {
     private Properties properties;
     private boolean done = false;
     private HashMap<String,JSONObject> tweets = new HashMap<>();
+    private HashMap<String,Integer> topHashtag = new HashMap<>();
 
     @Override
     public void prepare(Map<String, Object> map, TopologyContext topologyContext, OutputCollector outputCollector) {
@@ -54,29 +54,32 @@ public class DisasterBolt extends BaseRichBolt {
 
 
         if(o.toString().equals("finish")){
-            //System.out.println(this.tweets);
-            //System.out.println(this.tweets.size());
-            /*
-            if(!done) {
-                done = true;
-                reportResult();
-            }
-            */
             this.outputCollector.emit("tweet_stream", new Values("finish"));
         }
         else{
-            //Map ret = (Map) o;
             //READ TWEET FROM SPOUT
             String ret = (String) o;
             JSONObject tweet = new JSONObject(ret);
-            //System.out.println(tweet.getJSONObject("retweeted_status"));
+
             if(tweet.getString("place") != "null" || isRetweetedWithPlace(tweet) || isQuotedWithPlace(tweet)){
+
+                //CALCULATE TOP HASHTAG
+                JSONArray hashtags = extractHashtag(tweet);
+                if(hashtags.length()>0)
+                    this.outputCollector.emit("top_hashtag",new Values(hashtags));
+
+                //EXTRACT TIME
+                this.outputCollector.emit("time",new Values(tweet.getString("created_at")));
+
                 //EXECUTE SENTIMENT ANALYSIS
                 String sentiment = sentimentAnalysis(tweet.getString("text"));
                 tweet.put("sentiment",sentiment);
 
-                //this.tweets.put(tweet.getString("id"),tweet);
-                //System.out.println(this.tweets.keySet());
+
+                //EXTRACT DEVICE INFO
+                String device = extractDevice(tweet.getString("source"));
+                tweet.put("device",device);
+
                 //SEND TO OUTPUT BOLT
                 this.outputCollector.emit("tweet_stream", new Values(tweet.toString()));
             }
@@ -84,48 +87,22 @@ public class DisasterBolt extends BaseRichBolt {
 
     }
 
-    private void reportResult() {
-        //CREATE HTTP CLIENT
-        CloseableHttpClient httpClient = HttpClients.createDefault();
-        HttpPost httppost = new HttpPost(Constants.POST_URL+"/test");
+    private String extractDevice(String source) {
+        String[] splitted = source.split(" ");
+        String dev = splitted[splitted.length-1];
+        dev = dev.substring(0,dev.length()-4);
+        return dev;
+    }
 
-        //FORMAT REQUEST BODY OBJECT
-        String jsonMap = new Gson().toJson(tweets);
-        //System.out.println(this.tweets);
-        try {
-            httppost.setEntity(new StringEntity(jsonMap));
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
-        /*
-        ObjectMapper objectMapper = new ObjectMapper();
-        try {
-            String requestBody = objectMapper.writeValueAsString(tweets);
-            System.out.println(requestBody);
-            httppost.setEntity(new StringEntity(requestBody));
-
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
-        */
-        httppost.setHeader("Content-type", "application/json");
-
-        //SEND REQUEST
-        try (CloseableHttpResponse response = httpClient.execute(httppost)) {
-            HttpEntity entity = response.getEntity();
-            EntityUtils.consume(entity);
-        } catch (ClientProtocolException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    private JSONArray extractHashtag(JSONObject tweet) {
+        return tweet.getJSONObject("entities").getJSONArray("hashtags");
     }
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
         outputFieldsDeclarer.declareStream("tweet_stream",new Fields("tweet"));
+        outputFieldsDeclarer.declareStream("top_hashtag",new Fields("hashtag"));
+        outputFieldsDeclarer.declareStream("time",new Fields("time"));
     }
 
     public String sentimentAnalysis(String text){
